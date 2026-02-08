@@ -2,7 +2,6 @@
 
 local Network = {}
 
-local Binds = {}
 local TreeDataRequests: {[number]: {string}} = {}
 
 local RemoteEvent = Instance.new("RemoteEvent")
@@ -18,10 +17,8 @@ end
 local function ActivateNodeRequest(Player: Player, TreeName: string, NodeName: string)
 	assert(typeof(TreeName) == "string", `{Player.Name}: TreeName has to be a string.`)
 	assert(typeof(NodeName) == "string", `{Player.Name}: NodeName has to be a string.`)
-	assert(Binds[TreeName], `{Player.Name}: Tree has no node binded to activation.`)
-	assert(Binds[TreeName][NodeName], `{Player.Name}: Node hasn't been binded.`)
 	
-	local Result = Binds[TreeName][NodeName](Player)
+	local Result = getTree(TreeName):CallActivateNodeCallback(Player, NodeName)
 	
 	if Result then
 		getTree(TreeName):ActivateNode(Player, NodeName)
@@ -67,29 +64,6 @@ local function ReceivedRequest(Player: Player, Request: "ActivateNode" | "GetTre
 end
 
 RemoteEvent.OnServerEvent:Connect(ReceivedRequest)
-
-function Network.bindNode(TreeName: string, NodeName: string, ActivationCallback: (Player: Player) -> (true?))
-	if not Binds[TreeName] then
-		Binds[TreeName] = {}
-	end
-	
-	Binds[TreeName][NodeName] = ActivationCallback
-end
-
-function Network.unbindNode(TreeName: string, NodeName: string)
-	assert(Binds[TreeName], "Tree has no node binded to activation.")
-	assert(Binds[TreeName][NodeName], "Node wasn't binded.")
-	
-	Binds[TreeName][NodeName] = nil
-end
-
-function Network.isNodeBinded(TreeName: string, NodeName: string): true?
-	if not Binds[TreeName] or not Binds[TreeName][NodeName] then
-		return false
-	end
-	
-	return true
-end
 
 function Network.setup(getTreeFunction: (TreeName: string) -> ({any}))
 	getTree = getTreeFunction

@@ -46,31 +46,26 @@ function SkillTreeModule.getTreeData(Player: Player, TreeName: string): {[string
 	return SkillTreeModule.getTree(TreeName):GetData(Player)
 end
 
-function SkillTreeModule:AddNode(NodeName: string, LockedByNodesGroup: {[string]: number}, ActivateCallback: (Player: Player, Value: number) -> (true?))
+function SkillTreeModule:AddNode(NodeName: string, LockedByNodesGroup: {[string]: number}, ActivateCallback: (Player: Player, NodeName: string, Value: number) -> (true?))
 	assert(not self.Nodes[NodeName], "Node already exists.")
 	
-	local NewActivateCallback = function(Player: Player): true?
-		for OtherNodeName, Value in LockedByNodesGroup do
-			if self:GetNode(Player, OtherNodeName) < Value then
-				return
-			end
-		end
-		
-		return ActivateCallback(Player, self:GetNode(Player, NodeName))
-	end
-	
-	self.Nodes[NodeName] = {LockedByNodesGroup = LockedByNodesGroup, ActivateCallback = NewActivateCallback}
-	Network.bindNode(self.Name, NodeName, NewActivateCallback)
+	self.Nodes[NodeName] = {LockedByNodesGroup = LockedByNodesGroup, ActivateCallback = ActivateCallback}
 end
 
 function SkillTreeModule:RemoveNode(NodeName: string)
 	assert(self.Nodes[NodeName], "Node doesn't exist.")
 	
-	if Network.isNodeBinded(self.Name, NodeName) then
-		Network.unbindNode(self.Name, NodeName)
-	end
-	
 	self.Nodes[NodeName] = nil
+end
+
+function SkillTreeModule:CallActivateNodeCallback(Player: Player, NodeName: string): true?
+	for OtherNodeName, Value in self.Nodes[NodeName].LockedByNodesGroup do
+		if self:GetNode(Player, OtherNodeName) < Value then
+			return
+		end
+	end
+
+	return self.Nodes[NodeName].ActivateCallback(Player, NodeName, self:GetNode(Player, NodeName))
 end
 
 function SkillTreeModule:ActivateNode(Player: Player, NodeName: string)

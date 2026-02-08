@@ -14,17 +14,15 @@ local ServerSkillTreeModule = require(script.Parent.ServerSkillTreeModule)
 
 local SkillTree = ServerSkillTreeModule.new("Simple Skill Tree")
 
-SkillTree:AddNode("Node1", {}, function(Player, Value)
-	print(`{Player.Name} activated Node1 {tostring(Value + 1)} times.`)
+local function NodeActivatedCallback(Player: Player, NodeName: string, Value: number): true?
+	print(`{Player.Name} activated {NodeName} {tostring(Value + 1)} times.`)
 	return true
-end)
+end
 
-SkillTree:AddNode("Node2", {Node1 = 1}, function(Player, Value)
-	print(`{Player.Name} activated Node2 {tostring(Value + 1)} times.`)
-	return true
-end)
+SkillTree:AddNode("Node1", {}, NodeActivatedCallback)
+SkillTree:AddNode("Node2", {Node1 = 1}, NodeActivatedCallback)
 
-SkillTree:AddNode("SpecialNode", {}, function(Player, Value)
+SkillTree:AddNode("SpecialNode", {}, function(Player, _, Value)
 	if Player.Name == "fraiseFR004" then
 		print(`{Player.Name} activated SpecialNode {tostring(Value + 1)} times.`)
 		return true
